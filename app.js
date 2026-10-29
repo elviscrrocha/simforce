@@ -202,9 +202,11 @@
   let session = null;        // sessão de prática ativa
   let currentAttempt = null; // última tentativa concluída (p/ resultado/revisão)
   let navCollapsed = false;  // mapa de questões (certas/erradas) recolhido?
+  let navMenuOpen = false;   // menu sanduíche (mobile) aberto?
 
   function go(view, params) {
     stopTimer();
+    navMenuOpen = false; // navegar fecha o menu mobile
     state = { view, params: params || {} };
     render();
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -255,15 +257,15 @@
           <div class="logo-text">Sim<span>force</span></div>
         </div>
         <div class="nav-sep"></div>
-        <div class="nav-links">
+        <div class="nav-links ${navMenuOpen ? "open" : ""}">
           ${link("dashboard", "⚡ Meu painel")}
           ${link("catalog", "📝 Simulados")}
           ${link("trilhas", "🧭 Minhas trilhas")}
           ${link("conquistas", "🏆 Conquistas")}
         </div>
         <div class="nav-right">
-          <button class="icon-btn" title="Ajuda">❔</button>
-          <button class="icon-btn" title="Notificações">🔔<span class="dot"></span></button>
+          <button class="icon-btn nav-desktop-only" title="Ajuda">❔</button>
+          <button class="icon-btn nav-desktop-only" title="Notificações">🔔<span class="dot"></span></button>
           <div class="user-chip" data-nav="conquistas">
             <div class="avatar">${USER.initials}</div>
             <div class="user-meta">
@@ -271,6 +273,7 @@
               <span>${s.levelTitle} • nível ${s.level}</span>
             </div>
           </div>
+          <button class="hamburger" data-action="toggle-menu" aria-label="Menu" aria-expanded="${navMenuOpen}">${navMenuOpen ? "✕" : "☰"}</button>
         </div>
       </div>`;
   }
@@ -1406,6 +1409,7 @@
         if (session.running) { session.manualPause = true; pauseTimer(); }
         else { session.manualPause = false; startTimer(); }
         persistSession(); renderPractice(); break;
+      case "toggle-menu": navMenuOpen = !navMenuOpen; renderNav(); break;
       case "toggle-nav": navCollapsed = !navCollapsed; renderPractice(); break;
       case "flag": session.flagged[qid(session.questions[session.idx])] = true; persistSession(); renderPractice(); break;
       case "unflag": delete session.flagged[qid(session.questions[session.idx])]; persistSession(); renderPractice(); break;
