@@ -1386,17 +1386,13 @@
       case "start": startSession(key, detailMode, false); break;
       case "resume": startSession(key, null, true); break;
       case "restart": {
-        if (!confirm("Iniciar uma nova tentativa zera o cronômetro e TODAS as questões já respondidas. Continuar?")) break;
-        // mode da tentativa anterior (progresso salvo ou resultado), senão o escolhido no detalhe
-        const prevMode =
-          (store.progress[key] && store.progress[key].mode) ||
-          (currentAttempt && currentAttempt.key === key && currentAttempt.mode) ||
-          detailMode;
+        if (store.progress[key] &&
+            !confirm("Iniciar uma nova tentativa zera o cronômetro e TODAS as questões já respondidas. Continuar?")) break;
         stopTimer();
         session = null;
         delete store.progress[key]; // apaga respostas, verificadas, marcadas, índice e tempo
         saveStore();
-        startSession(key, prevMode, false); // começa do zero (answers/graded/flagged vazios, tempo 0)
+        go("detail", { key }); // sem progresso, o detalhe exibe o seletor de modo (prova/estudo) + Iniciar
         break;
       }
       case "exit-practice": persistSession(); stopTimer(); go("dashboard"); break;
