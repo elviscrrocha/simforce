@@ -119,14 +119,18 @@
     2: { desc: "Novos cenários para reforçar sua preparação para a prova.",     level: "Intermediário" },
     3: { desc: "Aprofunde automação, dados e análises com casos reais.",        level: "Intermediário" },
     4: { desc: "Simulado desafiador para consolidar sua aprovação.",            level: "Avançado" },
+    5: { desc: "Questões inéditas balanceadas pelos pesos oficiais do exame.",  level: "Prova real" },
   };
-  const SIMS = [1, 2, 3, 4].map((n) => {
+  // números de simulado presentes nos dados (inclui o 5 automaticamente)
+  const SIM_NUMS = [...new Set(QUESTIONS.map((q) => q.simulado))].sort((a, b) => a - b);
+  const SIMS = SIM_NUMS.map((n) => {
     const qs = QUESTIONS.filter((q) => q.simulado === n);
     return {
       n, key: "sim-" + n,
       title: "Administrator • Simulado " + String(n).padStart(2, "0"),
       cert: "Salesforce Certified Administrator",
-      desc: SIM_DESC[n].desc, level: SIM_DESC[n].level,
+      desc: (SIM_DESC[n] || { desc: "Simulado de prática.", level: "Prática" }).desc,
+      level: (SIM_DESC[n] || { level: "Prática" }).level,
       total: qs.length, goal: Math.ceil(qs.length * PASS_MARK / 100),
     };
   });
