@@ -794,6 +794,7 @@
       answers: saved ? saved.answers || {} : {},
       flagged: saved ? saved.flagged || {} : {},
       graded: saved ? saved.graded || {} : {},
+      eliminated: saved ? saved.eliminated || {} : {},
       idx: saved ? saved.idx || 0 : 0,
       elapsedSec: saved ? saved.elapsedSec || 0 : 0,
       startedAt: Date.now(),
@@ -811,7 +812,7 @@
     if (!session) return;
     store.progress[session.key] = {
       mode: session.mode, order: session.order, answers: session.answers,
-      flagged: session.flagged, graded: session.graded, idx: session.idx,
+      flagged: session.flagged, graded: session.graded, eliminated: session.eliminated, idx: session.idx,
       elapsedSec: currentElapsed(), savedAt: Date.now(),
       label: session.title,
     };
@@ -877,19 +878,24 @@
     const isLast = session.idx === total - 1;
 
     // opções
+    const elimSet = session.eliminated[id] || [];
     const opts = q.options.map((o) => {
       const sel = picked.includes(o.key);
-      let cls = "opt" + (sel ? " sel" : "");
-      let mark = "";
+      const elim = elimSet.includes(o.key);
+      let cls = "opt" + (sel ? " sel" : "") + (elim && !graded ? " elim" : "");
+      let right = "";
       if (graded) {
         cls += " locked";
-        if (q.correct.includes(o.key)) { cls += " correct"; mark = "✅"; }
-        else if (sel) { cls += " incorrect"; mark = "❌"; }
+        if (q.correct.includes(o.key)) { cls += " correct"; right = `<div class="omark">✅</div>`; }
+        else if (sel) { cls += " incorrect"; right = `<div class="omark">❌</div>`; }
+      } else {
+        // botão para eliminar/recuperar a alternativa (não seleciona)
+        right = `<button class="opt-x" data-action="eliminate" data-key="${o.key}" title="${elim ? "Recuperar alternativa" : "Excluir como possibilidade"}" aria-label="Excluir alternativa">✕</button>`;
       }
       return `<div class="${cls}" data-action="pick" data-key="${o.key}">
         <div class="k ${q.multi ? "sq" : ""}">${o.key}</div>
         <div class="otext">${escapeHtml(o.text)}</div>
-        <div class="omark">${mark}</div></div>`;
+        ${right}</div>`;
     }).join("");
 
     // explicação (modo estudo)
@@ -1019,6 +1025,19 @@
       else { if (picked.length >= q.selectCount) picked.shift(); picked.push(key); }
     } else picked = [key];
     session.answers[id] = picked;
+    // selecionar uma alternativa eliminada a recupera (não faz sentido escolher algo riscado)
+    if (session.eliminated[id]) session.eliminated[id] = session.eliminated[id].filter((k) => !picked.includes(k));
+    persistSession();
+    renderPractice();
+  }
+  function toggleEliminate(key) {
+    const q = session.questions[session.idx];
+    const id = qid(q);
+    if (session.mode === "study" && session.graded[id]) return;
+    const list = (session.eliminated[id] || []).slice();
+    const i = list.indexOf(key);
+    if (i >= 0) list.splice(i, 1); else list.push(key);
+    session.eliminated[id] = list;
     persistSession();
     renderPractice();
   }
@@ -1397,6 +1416,7 @@
       }
       case "exit-practice": persistSession(); stopTimer(); go("dashboard"); break;
       case "pick": pickOption(el.getAttribute("data-key")); break;
+      case "eliminate": toggleEliminate(el.getAttribute("data-key")); break;
       case "check": session.graded[qid(session.questions[session.idx])] = true; persistSession(); renderPractice(); break;
       case "next": if (session.idx < session.questions.length - 1) session.idx++; persistSession(); renderPractice(); break;
       case "prev": if (session.idx > 0) session.idx--; persistSession(); renderPractice(); break;

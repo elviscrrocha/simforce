@@ -309,6 +309,16 @@ button{font-family:inherit}
 .opt .k.sq{border-radius:9px}
 .opt .otext{flex:1;font-size:17px;color:var(--ink);line-height:1.5}
 .opt .omark{font-size:20px;margin-left:auto}
+/* botão de eliminar alternativa */
+.opt-x{margin-left:auto;flex:0 0 auto;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);
+  background:#fff;color:var(--muted);font-size:13px;font-weight:800;cursor:pointer;display:grid;place-items:center;
+  transition:.14s;line-height:1}
+.opt-x:hover{border-color:var(--bad);color:var(--bad);background:var(--bad-bg)}
+/* alternativa eliminada: menos destaque + riscada */
+.opt.elim{opacity:.5;background:#f6f8fb;border-style:dashed}
+.opt.elim .otext{text-decoration:line-through;color:var(--muted)}
+.opt.elim .k{opacity:.7}
+.opt.elim .opt-x{border-color:var(--bad);color:var(--bad);background:var(--bad-bg)}
 /* graded */
 .opt.correct{border-color:var(--ok);background:var(--ok-bg)}
 .opt.correct .k{background:var(--ok);border-color:var(--ok);color:#fff}
