@@ -501,7 +501,7 @@
         <div class="eb-body">
           <div class="eb-eyebrow">Revisão personalizada</div>
           <h3>Simulado dos meus erros</h3>
-          <p>${n} ${n === 1 ? "questão que você errou" : "questões que você errou"} em todas as tentativas, reunidas para fixar.</p>
+          <p>${n} ${n === 1 ? "questão que você ainda erra" : "questões que você ainda erra"}, sem repetição e priorizando o que mais cai e você mais erra.</p>
         </div>
         <button class="btn btn-primary" data-action="${action}" data-key="errors">${label}</button>
       </div>`;
@@ -695,7 +695,7 @@
           <p>Aqui reunimos as questões que você errou nas tentativas.</p></div>
           <button class="btn btn-outline" data-nav="catalog">← Voltar ao catálogo</button></div>
         <div class="card card-pad"><div class="empty"><span class="big">🏆</span>
-          Você ainda não tem questões erradas registradas.<br>Faça um simulado (e deixe o histórico salvar) para treinar seus erros aqui.
+          Nenhuma pendência por aqui! Ou você ainda não concluiu simulados, ou já dominou tudo o que errou.<br>Faça (ou refaça) um simulado para alimentar sua revisão personalizada.
           <div class="mt8"><button class="btn btn-primary" data-nav="catalog" style="margin-top:14px">Ver simulados</button></div>
         </div></div>
       </div>`;
@@ -733,7 +733,7 @@
         <div>
           <h1>${isErrors ? "🎯 " : ""}${title}</h1>
           <p>${isSim ? "Construa confiança para a certificação com cenários próximos do dia a dia de um administrador."
-                : isErrors ? "Todas as questões que você errou nas tentativas, reunidas para você revisar e fixar."
+                : isErrors ? "As questões que você ainda erra — sem repetição, priorizando as que você mais erra, para fixar de vez."
                 : tema.desc}</p>
         </div>
         <button class="btn btn-outline" data-nav="catalog">← Voltar ao catálogo</button>
@@ -819,24 +819,46 @@
       const n = +key.split("-")[1];
       return QUESTIONS.filter((q) => q.simulado === n).sort((a, b) => a.number - b.number);
     }
-    if (key === "errors") return shuffle(wrongQuestions().slice());
+    if (key === "errors") return wrongQuestions().slice(); // já vem curado e ordenado
     const temaId = key.replace("tema-", "");
     return shuffle(ALL_QUESTIONS.filter((q) => temaOf(q) === temaId).slice());
   }
 
-  // Questões que o usuário errou em QUALQUER tentativa do histórico (dedup).
+  // Revisão personalizada: questões que o usuário AINDA erra (última tentativa
+  // que a continha deu errado), sem repetição, priorizando as mais erradas e
+  // intercalando por tema para um treino equilibrado.
   function wrongQuestions() {
-    const order = [];
-    const wrong = new Set();
-    store.history.forEach((a) => {
+    // processa o histórico do mais antigo para o mais recente
+    const hist = store.history.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    const stat = {}; // id -> { wrong, lastWrong }
+    hist.forEach((a) => {
       (a.order || []).forEach((id) => {
         const q = Q_BY_ID[id];
         if (!q) return;
-        if (!order.includes(id)) order.push(id); // ordem de 1ª aparição
-        if (!isCorrectStored(q, (a.answers || {})[id])) wrong.add(id);
+        const ok = isCorrectStored(q, (a.answers || {})[id]);
+        const s = stat[id] || (stat[id] = { wrong: 0, lastWrong: false });
+        if (!ok) s.wrong++;
+        s.lastWrong = !ok; // a última ocorrência define se ainda está errando
       });
     });
-    return order.filter((id) => wrong.has(id)).map((id) => Q_BY_ID[id]);
+    // candidatas: ainda não dominadas (errou na vez mais recente)
+    const ids = Object.keys(stat).filter((id) => stat[id].lastWrong && Q_BY_ID[id]);
+    // dentro de cada tema, mais erradas primeiro
+    const byTema = {};
+    ids.forEach((id) => {
+      const t = temaOf(Q_BY_ID[id]);
+      (byTema[t] = byTema[t] || []).push(id);
+    });
+    Object.values(byTema).forEach((arr) => arr.sort((x, y) => stat[y].wrong - stat[x].wrong));
+    // intercala os temas (round-robin), temas com mais erros primeiro
+    const temaKeys = Object.keys(byTema).sort((a, b) => byTema[b].length - byTema[a].length);
+    const out = [];
+    let added = true;
+    while (added) {
+      added = false;
+      temaKeys.forEach((t) => { if (byTema[t].length) { out.push(byTema[t].shift()); added = true; } });
+    }
+    return out.map((id) => Q_BY_ID[id]);
   }
 
   function startSession(key, mode, resume) {
