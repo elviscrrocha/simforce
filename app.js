@@ -343,6 +343,8 @@
         ${statCard("Pontos de experiência", "✨", s.xp.toLocaleString("pt-BR") + " XP", `<div class="stat-sub amber">${s.xpForNext ? s.xpForNext + " XP p/ o nível " + (s.level + 1) : "nível máximo!"}</div>`)}
       </div>
 
+      ${errorsBannerHtml()}
+
       <div class="dash-2col">
         <div class="card card-pad resume-card">
           <div class="resume-head"><h3 style="font-size:19px;font-weight:800">Continue de onde parou</h3>
@@ -486,6 +488,25 @@
   // =================================================================
   let catFilter = { status: new Set(), tipo: new Set(), q: "" };
 
+  // Banner do "Simulado dos meus erros" (só aparece se houver erros no histórico)
+  function errorsBannerHtml() {
+    const n = wrongQuestions().length;
+    if (!n) return "";
+    const st = simStatus("errors");
+    const action = st.status === "progress" ? "resume" : "open-detail";
+    const label = st.status === "progress" ? "▶ Retomar" : "▶ Treinar meus erros";
+    return `
+      <div class="errors-banner">
+        <div class="eb-ic">🎯</div>
+        <div class="eb-body">
+          <div class="eb-eyebrow">Revisão personalizada</div>
+          <h3>Simulado dos meus erros</h3>
+          <p>${n} ${n === 1 ? "questão que você errou" : "questões que você errou"} em todas as tentativas, reunidas para fixar.</p>
+        </div>
+        <button class="btn btn-primary" data-action="${action}" data-key="errors">${label}</button>
+      </div>`;
+  }
+
   function renderCatalog() {
     // itens: 4 simulados + 6 práticas por tema
     const simItems = SIMS.map((s) => {
@@ -522,6 +543,8 @@
           <p>Encontre o simulado certo para sua certificação Salesforce e aprenda a cada tentativa.</p>
         </div>
       </div>
+
+      ${errorsBannerHtml()}
 
       <div class="toolbar">
         <div class="search"><span class="mag">🔎</span>
@@ -657,15 +680,33 @@
   function renderDetail() {
     const key = state.params.key;
     const isSim = key.startsWith("sim-");
-    const sim = simByKey[key];
-    const tema = isSim ? null : temaById[key.replace("tema-", "")];
+    const isErrors = key === "errors";
+    const sim = isSim ? simByKey[key] : null;
+    const tema = (!isSim && !isErrors) ? temaById[key.replace("tema-", "")] : null;
     const qs = isSim ? QUESTIONS.filter((q) => q.simulado === sim.n)
-                     : ALL_QUESTIONS.filter((q) => temaOf(q) === tema.id);
+             : isErrors ? wrongQuestions()
+             : ALL_QUESTIONS.filter((q) => temaOf(q) === tema.id);
+    // sem erros registrados → estado amigável
+    if (isErrors && qs.length === 0) {
+      appEl.innerHTML = `
+      <div class="page container container-wide">
+        <div class="breadcrumb">Simulados / <b>Meus erros</b></div>
+        <div class="page-head"><div><h1>🎯 Simulado dos meus erros</h1>
+          <p>Aqui reunimos as questões que você errou nas tentativas.</p></div>
+          <button class="btn btn-outline" data-nav="catalog">← Voltar ao catálogo</button></div>
+        <div class="card card-pad"><div class="empty"><span class="big">🏆</span>
+          Você ainda não tem questões erradas registradas.<br>Faça um simulado (e deixe o histórico salvar) para treinar seus erros aqui.
+          <div class="mt8"><button class="btn btn-primary" data-nav="catalog" style="margin-top:14px">Ver simulados</button></div>
+        </div></div>
+      </div>`;
+      return;
+    }
     const total = qs.length;
     const goal = Math.ceil(total * PASS_MARK / 100);
-    const title = isSim ? sim.title.replace("Administrator • ", "Salesforce Administrator • ") : tema.label;
-    const cert = isSim ? sim.cert : "Prática por tema";
-    const level = isSim ? sim.level : "Foco";
+    const title = isSim ? sim.title.replace("Administrator • ", "Salesforce Administrator • ")
+                : isErrors ? "Simulado dos meus erros" : tema.label;
+    const cert = isSim ? sim.cert : isErrors ? "Revisão personalizada" : "Prática por tema";
+    const level = isSim ? sim.level : isErrors ? "Seus erros" : "Foco";
     const time = isSim ? 90 : Math.round(total * 1.4);
     const st = simStatus(key);
     const resuming = st.status === "progress";
@@ -687,19 +728,21 @@
 
     appEl.innerHTML = `
     <div class="page container container-wide">
-      <div class="breadcrumb">Simulados / ${isSim ? "Administrator" : "Temas"} / <b>${isSim ? sim.title.replace("Administrator • ", "") : tema.short}</b></div>
+      <div class="breadcrumb">Simulados / ${isSim ? "Administrator" : isErrors ? "Revisão" : "Temas"} / <b>${isSim ? sim.title.replace("Administrator • ", "") : isErrors ? "Meus erros" : tema.short}</b></div>
       <div class="page-head">
         <div>
-          <h1>${title}</h1>
-          <p>${isSim ? "Construa confiança para a certificação com cenários próximos do dia a dia de um administrador." : tema.desc}</p>
+          <h1>${isErrors ? "🎯 " : ""}${title}</h1>
+          <p>${isSim ? "Construa confiança para a certificação com cenários próximos do dia a dia de um administrador."
+                : isErrors ? "Todas as questões que você errou nas tentativas, reunidas para você revisar e fixar."
+                : tema.desc}</p>
         </div>
         <button class="btn btn-outline" data-nav="catalog">← Voltar ao catálogo</button>
       </div>
 
       <div class="info-banner">
         <div class="ib-brand">
-          <div class="ib-ic">${isSim ? "🛡️" : tema.icon}</div>
-          <div><div class="ib-eyebrow">${isSim ? "Trilha Administrator" : "Tema"}</div>
+          <div class="ib-ic">${isSim ? "🛡️" : isErrors ? "🎯" : tema.icon}</div>
+          <div><div class="ib-eyebrow">${isSim ? "Trilha Administrator" : isErrors ? "Revisão personalizada" : "Tema"}</div>
             <div class="ib-title">${cert}</div><div class="ib-sub">${level} • atualizado em out. 2026</div></div>
         </div>
         <div class="ib-stat"><div class="ib-ic2">📄</div><b>${total} questões</b><span>Múltipla escolha</span></div>
@@ -713,7 +756,7 @@
         <div>
           <div class="card card-pad mb24">
             <h3 style="font-size:20px;font-weight:800">O que você vai praticar</h3>
-            <p style="font-size:14px;color:var(--muted);margin:4px 0 8px">${isSim ? "Distribuição das questões deste simulado por tema." : "Questões reunidas deste tema a partir dos 4 simulados."}</p>
+            <p style="font-size:14px;color:var(--muted);margin:4px 0 8px">${isSim ? "Distribuição das questões deste simulado por tema." : isErrors ? "Distribuição dos seus erros por tema — foque onde mais erra." : "Questões reunidas deste tema a partir dos simulados."}</p>
             ${temaRows}
           </div>
           <div class="card card-pad">
@@ -776,8 +819,24 @@
       const n = +key.split("-")[1];
       return QUESTIONS.filter((q) => q.simulado === n).sort((a, b) => a.number - b.number);
     }
+    if (key === "errors") return shuffle(wrongQuestions().slice());
     const temaId = key.replace("tema-", "");
     return shuffle(ALL_QUESTIONS.filter((q) => temaOf(q) === temaId).slice());
+  }
+
+  // Questões que o usuário errou em QUALQUER tentativa do histórico (dedup).
+  function wrongQuestions() {
+    const order = [];
+    const wrong = new Set();
+    store.history.forEach((a) => {
+      (a.order || []).forEach((id) => {
+        const q = Q_BY_ID[id];
+        if (!q) return;
+        if (!order.includes(id)) order.push(id); // ordem de 1ª aparição
+        if (!isCorrectStored(q, (a.answers || {})[id])) wrong.add(id);
+      });
+    });
+    return order.filter((id) => wrong.has(id)).map((id) => Q_BY_ID[id]);
   }
 
   function startSession(key, mode, resume) {
@@ -787,13 +846,14 @@
     else qs = buildQuestions(key);
 
     const isSim = key.startsWith("sim-");
-    const sim = simByKey[key];
-    const tema = isSim ? null : temaById[key.replace("tema-", "")];
+    const isErrors = key === "errors";
+    const sim = isSim ? simByKey[key] : null;
+    const tema = (!isSim && !isErrors) ? temaById[key.replace("tema-", "")] : null;
 
     session = {
       key, mode: saved ? saved.mode : mode,
-      isSim, title: isSim ? sim.title : tema.label,
-      cert: isSim ? sim.cert : "Prática por tema",
+      isSim, title: isSim ? sim.title : isErrors ? "Simulado dos meus erros" : tema.label,
+      cert: isSim ? sim.cert : isErrors ? "Revisão personalizada" : "Prática por tema",
       questions: qs, order: qs.map(qid),
       answers: saved ? saved.answers || {} : {},
       flagged: saved ? saved.flagged || {} : {},

@@ -41,6 +41,17 @@ button{font-family:inherit}
 .container{max-width:1240px;width:100%;margin:0 auto;padding:0 28px}
 .container-wide{max-width:1560px}
 
+/* banner "Simulado dos meus erros" */
+.errors-banner{display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  background:linear-gradient(110deg,#fff3ec,#ffe9f0);border:1px solid #f6d2c4;
+  border-radius:var(--radius);padding:20px 24px;margin-bottom:22px;box-shadow:var(--shadow)}
+.errors-banner .eb-ic{width:56px;height:56px;border-radius:14px;background:#fff;border:1px solid #f6d2c4;
+  display:grid;place-items:center;font-size:27px;flex:0 0 auto}
+.errors-banner .eb-body{flex:1;min-width:200px}
+.errors-banner .eb-eyebrow{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#c8551e}
+.errors-banner h3{font-size:19px;font-weight:800;color:var(--brand-ink);margin:2px 0 3px}
+.errors-banner p{font-size:14px;color:var(--body)}
+
 /* lista de tentativas anteriores (detalhe) */
 .attempt-list{display:flex;flex-direction:column;gap:12px}
 .attempt-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
