@@ -1459,67 +1459,90 @@
   // =================================================================
   //  TRILHAS
   // =================================================================
-  function renderTrilhas() {
-    const blocks = TRILHA_LIST.map((tr) => {
-      const trSims = SIMS.filter((s) => s.trilha === tr.id);
-      if (!trSims.length) return "";
-      const doneCount = trSims.filter((s) => simStatus(s.key).status === "done").length;
-      const pct = Math.round(doneCount / trSims.length * 100);
-      const steps = trSims.map((sim, i) => {
-        const st = simStatus(sim.key);
-        const done = st.status === "done", prog = st.status === "progress";
-        return `<div class="card card-pad" style="display:flex;gap:18px;align-items:center">
-            <div class="resume-ic" style="background:${done ? "var(--ok-bg)" : "var(--tint)"}">${done ? "✅" : prog ? "⏳" : i + 1}</div>
-            <div style="flex:1">
-              <div class="resume-eyebrow">Simulado ${String(sim.n).padStart(2, "0")} • ${sim.level}</div>
-              <div class="resume-title">Simulado ${String(sim.n).padStart(2, "0")}</div>
-              <div class="resume-sub">${sim.total} questões • ${done ? "melhor resultado " + st.best + "%" : prog ? st.answered + "/" + st.total + " respondidas" : "não iniciado"}</div>
-            </div>
-            <button class="btn ${prog ? "btn-primary" : "btn-outline"}" data-action="open-detail" data-key="${sim.key}">${done ? "Refazer" : prog ? "Retomar" : "Começar"} →</button>
-          </div>`;
-      }).join("");
-      const temaCards = tr.temas.map((t) => {
-        const qn = ALL_QUESTIONS.filter((q) => temaOf(q) === t.id).length;
-        if (!qn) return "";
-        return `<div class="card card-pad" style="display:flex;gap:16px;align-items:center;cursor:pointer" data-action="open-detail" data-key="tema-${t.id}">
-            <div class="tema-ic">${t.icon}</div>
-            <div style="flex:1"><b style="color:var(--brand-ink)">${t.label}</b><br><span style="font-size:13px;color:var(--muted)">${qn} questões</span></div>
-            <span style="color:var(--brand);font-weight:700">→</span></div>`;
-      }).join("");
-      return `
-        <div class="trilha-block card card-pad mb24">
-          <div class="trilha-head">
-            <div class="th-ic">${tr.icon}</div>
-            <div style="flex:1"><div class="resume-eyebrow">${tr.certFull} · meta ${tr.pass}%</div>
-              <h2 style="font-size:22px">${tr.name}</h2></div>
-            <span class="badge badge-blue">${doneCount}/${trSims.length} simulados</span>
+  // Conteúdo de UMA trilha (simulados + reforço + erros)
+  function trilhaDetailHtml(tr) {
+    const trSims = SIMS.filter((s) => s.trilha === tr.id);
+    const doneCount = trSims.filter((s) => simStatus(s.key).status === "done").length;
+    const pct = trSims.length ? Math.round(doneCount / trSims.length * 100) : 0;
+    const steps = trSims.map((sim, i) => {
+      const st = simStatus(sim.key);
+      const done = st.status === "done", prog = st.status === "progress";
+      return `<div class="card card-pad" style="display:flex;gap:18px;align-items:center">
+          <div class="resume-ic" style="background:${done ? "var(--ok-bg)" : "var(--tint)"}">${done ? "✅" : prog ? "⏳" : i + 1}</div>
+          <div style="flex:1">
+            <div class="resume-eyebrow">Simulado ${String(sim.n).padStart(2, "0")} • ${sim.level}</div>
+            <div class="resume-title">Simulado ${String(sim.n).padStart(2, "0")}</div>
+            <div class="resume-sub">${sim.total} questões • ${done ? "melhor resultado " + st.best + "%" : prog ? st.answered + "/" + st.total + " respondidas" : "não iniciado"}</div>
           </div>
-          <div class="pbar mb16" style="margin-top:12px"><div class="pbar-fill" style="width:${pct}%"></div></div>
-          ${errorsBannerHtml(tr.id)}
-          <div class="grid" style="grid-template-columns:1fr;gap:12px">${steps}</div>
-          <div class="section-head" style="margin:20px 0 12px"><h3 style="font-size:17px">🎯 Reforço por tema</h3></div>
-          <div class="cards-2">${temaCards}</div>
+          <button class="btn ${prog ? "btn-primary" : "btn-outline"}" data-action="open-detail" data-key="${sim.key}">${done ? "Refazer" : prog ? "Retomar" : "Começar"} →</button>
         </div>`;
     }).join("");
+    const temaCards = tr.temas.map((t) => {
+      const qn = ALL_QUESTIONS.filter((q) => temaOf(q) === t.id).length;
+      if (!qn) return "";
+      return `<div class="card card-pad" style="display:flex;gap:16px;align-items:center;cursor:pointer" data-action="open-detail" data-key="tema-${t.id}">
+          <div class="tema-ic">${t.icon}</div>
+          <div style="flex:1"><b style="color:var(--brand-ink)">${t.label}</b><br><span style="font-size:13px;color:var(--muted)">${qn} questões</span></div>
+          <span style="color:var(--brand);font-weight:700">→</span></div>`;
+    }).join("");
+    return `
+    <div class="page container container-wide">
+      <div class="breadcrumb">Minhas trilhas / <b>${tr.name}</b></div>
+      <div class="page-head">
+        <div><h1>${tr.icon} ${tr.name}</h1><p>${tr.certFull} · meta ${tr.pass}% · ${trSims.length} simulados.</p></div>
+        <button class="btn btn-outline" data-nav="trilhas">← Todas as trilhas</button>
+      </div>
+      <div class="card card-pad mb24">
+        <div class="pbar-row"><span style="font-weight:700">Progresso da trilha</span><span style="color:var(--brand);font-weight:800">${doneCount}/${trSims.length} · ${pct}%</span></div>
+        <div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div>
+      </div>
+      ${errorsBannerHtml(tr.id)}
+      <div class="grid" style="grid-template-columns:1fr;gap:12px">${steps}</div>
+      <div class="section-head" style="margin:28px 0 14px"><h3>🎯 Reforço por tema</h3></div>
+      <div class="cards-2">${temaCards}</div>
+    </div>`;
+  }
 
-    const comingSoon = [
+  function renderTrilhas() {
+    const sel = state.params.trilha;
+    if (sel && TRILHAS[sel] && SIMS.some((s) => s.trilha === sel)) {
+      appEl.innerHTML = trilhaDetailHtml(TRILHAS[sel]);
+      return;
+    }
+    // seletor de trilhas
+    const active = TRILHA_LIST.filter((tr) => SIMS.some((s) => s.trilha === tr.id));
+    const cards = active.map((tr) => {
+      const trSims = SIMS.filter((s) => s.trilha === tr.id);
+      const done = trSims.filter((s) => simStatus(s.key).status === "done").length;
+      const pct = trSims.length ? Math.round(done / trSims.length * 100) : 0;
+      return `<div class="sim-card" data-action="open-trilha" data-trilha="${tr.id}">
+          <div class="sim-card-top"><div class="sim-ic">${tr.icon}</div><span class="badge badge-blue">${done}/${trSims.length}</span></div>
+          <div class="sim-cert">${tr.certFull}</div>
+          <h3>${tr.name}</h3>
+          <div class="sim-desc">Meta ${tr.pass}% · ${trSims.length} simulados · ${tr.temas.length} domínios</div>
+          <div class="pbar" style="margin-bottom:14px"><div class="pbar-fill" style="width:${pct}%"></div></div>
+          <div class="sim-foot"><span class="fnote muted">${pct}% concluído</span>
+            <span class="badge badge-blue">▶ Abrir trilha</span></div>
+        </div>`;
+    }).join("");
+    const soon = [
       { name: "Data Cloud", icon: "🌩️" },
       { name: "Marketing Cloud", icon: "📣" },
-    ].map((c) => `<div class="card card-pad soon-card">
-        <div class="th-ic">${c.icon}</div>
-        <div style="flex:1"><div class="resume-eyebrow">Em breve</div>
-          <h3 style="font-size:18px">${c.name}</h3>
-          <span style="font-size:13px;color:var(--muted)">Simulados desta certificação serão adicionados em breve.</span></div>
+    ].map((c) => `<div class="sim-card soon-card" style="cursor:default">
+        <div class="sim-card-top"><div class="sim-ic" style="filter:grayscale(.3)">${c.icon}</div><span class="badge badge-gray">Em breve</span></div>
+        <div class="sim-cert">Salesforce Certified</div>
+        <h3>${c.name}</h3>
+        <div class="sim-desc">Simulados desta certificação serão adicionados em breve.</div>
       </div>`).join("");
 
     appEl.innerHTML = `
     <div class="page container container-wide">
       <div class="breadcrumb">Minhas trilhas</div>
       <div class="page-head"><div><h1>🧭 Minhas trilhas</h1>
-        <p>Seu progresso por certificação. Escolha uma trilha e avance rumo à aprovação.</p></div></div>
-      ${blocks}
-      <div class="section-head" style="margin:10px 0 14px"><h3 style="font-size:18px">Próximas trilhas</h3></div>
-      <div class="cards-2">${comingSoon}</div>
+        <p>Escolha a certificação que você quer treinar.</p></div></div>
+      <div class="cards-2">${cards}</div>
+      <div class="section-head" style="margin:28px 0 14px"><h3 style="font-size:18px">Próximas trilhas</h3></div>
+      <div class="cards-2">${soon}</div>
     </div>`;
   }
 
@@ -1569,6 +1592,7 @@
     const key = el.getAttribute("data-key");
     switch (act) {
       case "open-detail": go("detail", { key }); break;
+      case "open-trilha": go("trilhas", { trilha: el.getAttribute("data-trilha") }); break;
       case "pick-mode": detailMode = el.getAttribute("data-mode"); renderDetail(); break;
       case "start": startSession(key, detailMode, false); break;
       case "resume": startSession(key, null, true); break;
