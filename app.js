@@ -124,6 +124,17 @@
         { id: "ab-deploy",       label: "App Deployment",                        short: "Deployment",     desc: "Change sets, pacotes, sandboxes e deploy.",              icon: "🚀" },
       ],
     },
+    datacloud: {
+      id: "datacloud", name: "Data Cloud", certFull: "Salesforce Certified Data Cloud Consultant", icon: "🌩️", pass: 62,
+      temas: [
+        { id: "dc-overview",   label: "Solution Overview",          short: "Overview",      desc: "Visão geral, casos de uso, arquitetura e edições do Data Cloud.", icon: "🧭" },
+        { id: "dc-ingestion",  label: "Data Ingestion & Modeling",  short: "Ingestion",     desc: "Data Streams, DLO/DMO, mapeamento, transforms e data spaces.",    icon: "🗄️" },
+        { id: "dc-identity",   label: "Identity Resolution",        short: "Identity",      desc: "Match/reconciliation rules e perfil unificado.",                 icon: "🧬" },
+        { id: "dc-segment",    label: "Segmentation & Insights",    short: "Segmentation",  desc: "Segmentos, Calculated Insights e atributos relacionados.",       icon: "🎯" },
+        { id: "dc-activation", label: "Activation & Data Actions",  short: "Activation",    desc: "Activation targets, Data Actions e compartilhamento de dados.",  icon: "🚀" },
+        { id: "dc-governance", label: "Data Governance",            short: "Governance",    desc: "Consentimento, privacidade, retenção e segurança.",              icon: "🔐" },
+      ],
+    },
   };
   const TRILHA_LIST = Object.values(TRILHAS);
 
@@ -1526,11 +1537,10 @@
         </div>`;
     }).join("");
     const soon = [
-      { name: "Data Cloud", icon: "🌩️" },
-      { name: "Marketing Cloud", icon: "📣" },
-    ].map((c) => `<div class="sim-card soon-card" style="cursor:default">
+      { name: "Marketing Cloud Next Consultant", cert: "Salesforce Certified Marketing Cloud Next Consultant", icon: "📣" },
+    ].filter((c) => !active.some((tr) => tr.name === c.name)).map((c) => `<div class="sim-card soon-card" style="cursor:default">
         <div class="sim-card-top"><div class="sim-ic" style="filter:grayscale(.3)">${c.icon}</div><span class="badge badge-gray">Em breve</span></div>
-        <div class="sim-cert">Salesforce Certified</div>
+        <div class="sim-cert">${c.cert}</div>
         <h3>${c.name}</h3>
         <div class="sim-desc">Simulados desta certificação serão adicionados em breve.</div>
       </div>`).join("");
