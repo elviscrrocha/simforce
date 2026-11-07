@@ -41,6 +41,14 @@ button{font-family:inherit}
 .container{max-width:1240px;width:100%;margin:0 auto;padding:0 28px}
 .container-wide{max-width:1560px}
 
+/* ===== Minhas trilhas (por certificação) ===== */
+.trilha-block{background:linear-gradient(180deg,#f6faff,#ffffff)}
+.trilha-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.trilha-head h2{color:var(--brand-ink);letter-spacing:-.3px}
+.th-ic{width:56px;height:56px;border-radius:14px;background:var(--tint);display:grid;place-items:center;font-size:27px;flex:0 0 auto}
+.soon-card{display:flex;gap:16px;align-items:center;opacity:.72}
+.soon-card .th-ic{filter:grayscale(.3)}
+
 /* banner "Simulado dos meus erros" */
 .errors-banner{display:flex;align-items:center;gap:18px;flex-wrap:wrap;
   background:linear-gradient(110deg,#fff3ec,#ffe9f0);border:1px solid #f6d2c4;

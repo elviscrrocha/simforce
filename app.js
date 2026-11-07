@@ -99,45 +99,85 @@
     </g>
   </svg>`;
 
-  // ---- Domínios oficiais da prova Admin (id === q.module) -----------
-  const TEMAS = [
-    { id: "config",       label: "Configuration and Setup",                  short: "Configuration & Setup", desc: "Empresa, usuários, perfis, permissões e acessos.",            icon: "⚙️" },
-    { id: "objects",      label: "Object Manager and Lightning App Builder", short: "Object Manager",        desc: "Objetos, campos, relacionamentos e páginas Lightning.",       icon: "🧩" },
-    { id: "sales",        label: "Sales and Marketing Applications",         short: "Sales & Marketing",     desc: "Leads, contas, oportunidades, campanhas e previsões.",        icon: "💼" },
-    { id: "service",      label: "Service and Support Applications",         short: "Service & Support",     desc: "Casos, filas, escalonamento, Omni-Channel e entitlements.",   icon: "🎧" },
-    { id: "productivity", label: "Productivity and Collaboration",           short: "Productivity",          desc: "Atividades, Chatter, mobile, ações rápidas e templates.",     icon: "🤝" },
-    { id: "data",         label: "Data and Analytics Management",            short: "Data & Analytics",      desc: "Importação, relatórios, painéis e qualidade de dados.",       icon: "📊" },
-    { id: "automation",   label: "Automation",                               short: "Automation",            desc: "Flow, regras de validação, aprovação e processos.",           icon: "🔄" },
-    { id: "agentforce",   label: "Agentforce",                               short: "Agentforce",            desc: "Agentes de IA, prompts, Einstein e grounding.",               icon: "🤖" },
-  ];
-  const temaOf = (q) => (temaById[q.module] ? q.module : "config");
-  const temaById = Object.fromEntries(TEMAS.map((t) => [t.id, t]));
+  // ---- Trilhas (certificações) com seus domínios oficiais -----------
+  const TRILHAS = {
+    admin: {
+      id: "admin", name: "Administrator", certFull: "Salesforce Certified Administrator", icon: "🛡️", pass: 65,
+      temas: [
+        { id: "config",       label: "Configuration and Setup",                  short: "Configuration & Setup", desc: "Empresa, usuários, perfis, permissões e acessos.",          icon: "⚙️" },
+        { id: "objects",      label: "Object Manager and Lightning App Builder", short: "Object Manager",        desc: "Objetos, campos, relacionamentos e páginas Lightning.",     icon: "🧩" },
+        { id: "sales",        label: "Sales and Marketing Applications",         short: "Sales & Marketing",     desc: "Leads, contas, oportunidades, campanhas e previsões.",      icon: "💼" },
+        { id: "service",      label: "Service and Support Applications",         short: "Service & Support",     desc: "Casos, filas, escalonamento, Omni-Channel e entitlements.", icon: "🎧" },
+        { id: "productivity", label: "Productivity and Collaboration",           short: "Productivity",          desc: "Atividades, Chatter, mobile, ações rápidas e templates.",   icon: "🤝" },
+        { id: "data",         label: "Data and Analytics Management",            short: "Data & Analytics",      desc: "Importação, relatórios, painéis e qualidade de dados.",     icon: "📊" },
+        { id: "automation",   label: "Automation",                               short: "Automation",            desc: "Flow, regras de validação, aprovação e processos.",         icon: "🔄" },
+        { id: "agentforce",   label: "Agentforce",                               short: "Agentforce",            desc: "Agentes de IA, prompts, Einstein e grounding.",             icon: "🤖" },
+      ],
+    },
+    appbuilder: {
+      id: "appbuilder", name: "Platform App Builder", certFull: "Salesforce Certified Platform App Builder", icon: "🧱", pass: 63,
+      temas: [
+        { id: "ab-fundamentals", label: "Salesforce Fundamentals",               short: "Fundamentals",   desc: "Plataforma, AppExchange, declarativo vs. programático.", icon: "🧭" },
+        { id: "ab-datamodel",    label: "Data Modeling & Management",            short: "Data Modeling",  desc: "Objetos, campos, relacionamentos, fórmulas e dados.",    icon: "🗄️" },
+        { id: "ab-logic",        label: "Business Logic & Process Automation",   short: "Business Logic", desc: "Flow, regras de validação, aprovação e automação.",      icon: "⚙️" },
+        { id: "ab-ui",           label: "User Interface",                        short: "User Interface", desc: "Lightning App Builder, páginas, componentes e ações.",   icon: "🎨" },
+        { id: "ab-deploy",       label: "App Deployment",                        short: "Deployment",     desc: "Change sets, pacotes, sandboxes e deploy.",              icon: "🚀" },
+      ],
+    },
+  };
+  const TRILHA_LIST = Object.values(TRILHAS);
 
-  // ---- Simulados ----------------------------------------------------
-  const SIM_DESC = {
+  // normaliza trilha nas questões existentes (Admin não tinha o campo)
+  QUESTIONS.forEach((q) => { if (!q.trilha) q.trilha = "admin"; });
+
+  // índice global de temas (ids únicos entre trilhas) + helpers
+  const temaById = {};
+  TRILHA_LIST.forEach((tr) => tr.temas.forEach((t) => { t.trilha = tr.id; temaById[t.id] = t; }));
+  const trilhaOf = (q) => (TRILHAS[q.trilha] ? q.trilha : "admin");
+  const temasOf = (trilhaId) => (TRILHAS[trilhaId] || TRILHAS.admin).temas;
+  const temaOf = (q) => (temaById[q.module] ? q.module : temasOf(trilhaOf(q))[0].id);
+  const passOf = (trilhaId) => (TRILHAS[trilhaId] || TRILHAS.admin).pass;
+  const PASS_ADMIN = TRILHAS.admin.pass; // compat para textos antigos
+
+  // ---- Simulados (por trilha) ---------------------------------------
+  const SIM_DESC_ADMIN = {
     1: { desc: "Domine a base: configuração, segurança, objetos e relatórios.", level: "Fundamentos" },
     2: { desc: "Novos cenários para reforçar sua preparação para a prova.",     level: "Intermediário" },
     3: { desc: "Aprofunde automação, dados e análises com casos reais.",        level: "Intermediário" },
     4: { desc: "Simulado desafiador para consolidar sua aprovação.",            level: "Avançado" },
     5: { desc: "Questões inéditas balanceadas pelos pesos oficiais do exame.",  level: "Prova real" },
   };
-  // números de simulado presentes nos dados (inclui o 5 automaticamente)
-  const SIM_NUMS = [...new Set(QUESTIONS.map((q) => q.simulado))].sort((a, b) => a - b);
-  const SIMS = SIM_NUMS.map((n) => {
-    const qs = QUESTIONS.filter((q) => q.simulado === n);
-    return {
-      n, key: "sim-" + n,
-      title: "Administrator • Simulado " + String(n).padStart(2, "0"),
-      cert: "Salesforce Certified Administrator",
-      desc: (SIM_DESC[n] || { desc: "Simulado de prática.", level: "Prática" }).desc,
-      level: (SIM_DESC[n] || { level: "Prática" }).level,
-      total: qs.length, goal: Math.ceil(qs.length * PASS_MARK / 100),
-    };
-  });
+  // chave de simulado: admin = "sim-N" (compat); demais = "sim-<trilha>-N"
+  const simKey = (trilhaId, n) => trilhaId === "admin" ? "sim-" + n : "sim-" + trilhaId + "-" + n;
+  // pares (trilha, n) presentes nos dados
+  const SIMS = [];
+  { const seen = {};
+    QUESTIONS.forEach((q) => {
+      const tr = trilhaOf(q), k = tr + "|" + q.simulado;
+      if (seen[k]) return; seen[k] = true;
+      const qs = QUESTIONS.filter((x) => trilhaOf(x) === tr && x.simulado === q.simulado);
+      const T = TRILHAS[tr];
+      const d = tr === "admin" ? (SIM_DESC_ADMIN[q.simulado] || {}) : {};
+      SIMS.push({
+        n: q.simulado, trilha: tr, key: simKey(tr, q.simulado),
+        title: T.name + " • Simulado " + String(q.simulado).padStart(2, "0"),
+        cert: T.certFull,
+        desc: d.desc || "Simulado de prática para a certificação " + T.name + ".",
+        level: d.level || "Prática",
+        total: qs.length, goal: Math.ceil(qs.length * T.pass / 100),
+      });
+    });
+    SIMS.sort((a, b) => a.trilha.localeCompare(b.trilha) || a.n - b.n);
+  }
   const simByKey = Object.fromEntries(SIMS.map((s) => [s.key, s]));
+  // trilha a partir de uma chave de simulado
+  const simKeyTrilha = (key) => {
+    const s = simByKey[key];
+    return s ? s.trilha : "admin";
+  };
 
   // ---- Questões extras (prática por módulo) -------------------------
-  const EXTRA = window.EXTRA_QUESTIONS || [];
+  const EXTRA = (window.EXTRA_QUESTIONS || []).map((q) => (q.trilha ? q : Object.assign(q, { trilha: "admin" })));
   const ALL_QUESTIONS = QUESTIONS.concat(EXTRA);
 
   // ---- Traduções (PT-BR) das explicações, por id de questão ---------
@@ -145,8 +185,10 @@
   // Camada de correção: {id: {en, pt}} com letras de alternativa ajustadas.
   const EXPL_FIX = window.EXPLANATION_FIX || {};
 
-  // ---- ID de questão ------------------------------------------------
-  const qid = (q) => q.id || `s${q.simulado}q${q.number}`;
+  // ---- ID de questão (namespaced por trilha; admin mantém compat) ---
+  const qid = (q) => q.id || (trilhaOf(q) === "admin"
+    ? `s${q.simulado}q${q.number}`
+    : `${trilhaOf(q)}-s${q.simulado}q${q.number}`);
   const Q_BY_ID = Object.fromEntries(ALL_QUESTIONS.map((q) => [qid(q), q]));
 
   // =================================================================
@@ -192,8 +234,8 @@
     { id: "first", icon: "🚀", name: "Primeiro passo",       desc: "Conclua seu primeiro simulado.",            test: (s) => s.history.length >= 1 },
     { id: "pass",  icon: "🎯", name: "Linha de corte",       desc: "Atinja 65% em um simulado.",                test: (s) => s.history.some((h) => h.pct >= 65) },
     { id: "ace",   icon: "🏆", name: "Alta performance",     desc: "Alcance 80% ou mais em uma tentativa.",     test: (s) => s.history.some((h) => h.pct >= 80) },
-    { id: "all4",  icon: "☁️", name: "Maratona Admin",       desc: "Conclua os 4 simulados oficiais.",          test: (s) => new Set(s.history.filter((h) => h.key.startsWith("sim-")).map((h) => h.key)).size >= 4 },
-    { id: "themes",icon: "🧭", name: "Explorador de temas",  desc: "Pratique questões de todos os 6 temas.",    test: (s) => TEMAS.every((t) => s.history.some((h) => h.byTema && h.byTema[t.id])) },
+    { id: "all4",  icon: "☁️", name: "Maratona Admin",       desc: "Conclua 4 simulados de Administrator.",     test: (s) => new Set(s.history.filter((h) => h.key.startsWith("sim-") && (h.trilha || "admin") === "admin").map((h) => h.key)).size >= 4 },
+    { id: "themes",icon: "🧭", name: "Explorador de temas",  desc: "Pratique questões de todos os temas de Admin.", test: (s) => temasOf("admin").every((t) => s.history.some((h) => h.byTema && h.byTema[t.id])) },
     { id: "perf",  icon: "⭐", name: "Domínio total",        desc: "Acerte 100% de um tema em um simulado.",    test: (s) => s.history.some((h) => h.byTema && Object.values(h.byTema).some((b) => b.t > 0 && b.c === b.t)) },
     { id: "streak",icon: "🔥", name: "Constância",           desc: "Estude em 3 dias diferentes.",              test: () => distinctDays() >= 3 },
     { id: "vet",   icon: "💪", name: "Veterano",             desc: "Conclua 10 tentativas.",                    test: (s) => s.history.length >= 10 },
@@ -299,11 +341,13 @@
         <div class="mt8"><button class="btn btn-primary" data-nav="catalog" style="margin-top:14px">Ver simulados</button></div>
       </div>`;
 
-    // trilha de certificação
-    const trilhaPct = Math.round((s.simsDone / SIMS.length) * 100);
+    // trilha de certificação (foco em Administrator no painel)
+    const adminSims = SIMS.filter((x) => x.trilha === "admin");
+    const adminDone = adminSims.filter((x) => simStatus(x.key).status === "done").length;
+    const trilhaPct = adminSims.length ? Math.round((adminDone / adminSims.length) * 100) : 0;
 
-    // evolução
-    const series = store.history.filter((h) => h.key.startsWith("sim-")).slice(0, 8).reverse();
+    // evolução (apenas simulados Admin, para a série ser coerente)
+    const series = store.history.filter((h) => h.key.startsWith("sim-") && (h.trilha || "admin") === "admin").slice(0, 8).reverse();
 
     // conquistas (resumo)
     const achv = ACHIEVEMENTS.map((a) => ({ a, on: a.test(store) }));
@@ -343,8 +387,6 @@
         ${statCard("Pontos de experiência", "✨", s.xp.toLocaleString("pt-BR") + " XP", `<div class="stat-sub amber">${s.xpForNext ? s.xpForNext + " XP p/ o nível " + (s.level + 1) : "nível máximo!"}</div>`)}
       </div>
 
-      ${errorsBannerHtml()}
-
       <div class="dash-2col">
         <div class="card card-pad resume-card">
           <div class="resume-head"><h3 style="font-size:19px;font-weight:800">Continue de onde parou</h3>
@@ -358,7 +400,7 @@
             <div class="t-ic">🛡️</div>
             <div style="flex:1">
               <b style="color:var(--brand-ink)">Rumo à Administrator</b>
-              <div style="font-size:13px;color:var(--muted)">${s.simsDone} de ${SIMS.length} simulados concluídos</div>
+              <div style="font-size:13px;color:var(--muted)">${adminDone} de ${adminSims.length} simulados concluídos</div>
             </div>
           </div>
           <div style="margin-top:18px">
@@ -402,8 +444,8 @@
   }
   function nextStepLabel() {
     const done = new Set(store.history.filter((h) => h.key.startsWith("sim-")).map((h) => h.key));
-    const next = SIMS.find((s) => !done.has(s.key));
-    return next ? next.title.replace("Administrator • ", "") : "Revisar seus erros";
+    const next = SIMS.filter((s) => s.trilha === "admin").find((s) => !done.has(s.key));
+    return next ? "Simulado " + String(next.n).padStart(2, "0") : "Revisar seus erros";
   }
   function trendSub(series) {
     if (series.length < 2) return `<div class="stat-sub muted">${series.length ? "primeira tentativa" : "sem dados ainda"}</div>`;
@@ -486,24 +528,26 @@
   // =================================================================
   //  CATÁLOGO
   // =================================================================
-  let catFilter = { status: new Set(), tipo: new Set(), q: "" };
+  let catFilter = { cert: new Set(), status: new Set(), tipo: new Set(), q: "" };
 
-  // Banner do "Simulado dos meus erros" (só aparece se houver erros no histórico)
-  function errorsBannerHtml() {
-    const n = wrongQuestions().length;
+  // Banner do "Simulado dos meus erros" por trilha (só se houver erros)
+  function errorsBannerHtml(trilhaId) {
+    const n = wrongQuestions(trilhaId).length;
     if (!n) return "";
-    const st = simStatus("errors");
+    const key = "errors-" + trilhaId;
+    const T = TRILHAS[trilhaId] || TRILHAS.admin;
+    const st = simStatus(key);
     const action = st.status === "progress" ? "resume" : "open-detail";
     const label = st.status === "progress" ? "▶ Retomar" : "▶ Treinar meus erros";
     return `
       <div class="errors-banner">
         <div class="eb-ic">🎯</div>
         <div class="eb-body">
-          <div class="eb-eyebrow">Revisão personalizada</div>
-          <h3>Simulado dos meus erros</h3>
-          <p>${n} ${n === 1 ? "questão que você ainda erra" : "questões que você ainda erra"}, sem repetição e priorizando o que mais cai e você mais erra.</p>
+          <div class="eb-eyebrow">Revisão personalizada · ${T.name}</div>
+          <h3>Meus erros — ${T.name}</h3>
+          <p>${n} ${n === 1 ? "questão que você ainda erra" : "questões que você ainda erra"}, sem repetição e priorizando o que você mais erra.</p>
         </div>
-        <button class="btn btn-primary" data-action="${action}" data-key="errors">${label}</button>
+        <button class="btn btn-primary" data-action="${action}" data-key="${key}">${label}</button>
       </div>`;
   }
 
@@ -511,16 +555,16 @@
     // itens: 4 simulados + 6 práticas por tema
     const simItems = SIMS.map((s) => {
       const st = simStatus(s.key);
-      return { kind: "sim", key: s.key, sim: s, icon: temaIconForSim(s.n), cert: s.cert,
+      return { kind: "sim", key: s.key, sim: s, trilha: s.trilha, icon: TRILHAS[s.trilha].icon, cert: s.cert,
         title: s.title, desc: s.desc, total: s.total, time: 90, level: s.level, st };
     });
-    const temaItems = TEMAS.map((t) => {
+    const temaItems = TRILHA_LIST.flatMap((tr) => tr.temas.map((t) => {
       const qs = ALL_QUESTIONS.filter((q) => temaOf(q) === t.id);
       const key = "tema-" + t.id;
       const st = simStatus(key);
-      return { kind: "tema", key, tema: t, icon: t.icon, cert: "Prática por tema",
+      return { kind: "tema", key, tema: t, trilha: tr.id, icon: t.icon, cert: tr.name + " · prática por tema",
         title: t.label, desc: t.desc, total: qs.length, time: Math.round(qs.length * 1.4), level: "Foco", st };
-    });
+    })).filter((i) => i.total > 0);
     let items = simItems.concat(temaItems);
 
     // filtros
@@ -529,10 +573,12 @@
       const q = f.q.toLowerCase();
       items = items.filter((i) => (i.title + " " + i.desc + " " + i.cert).toLowerCase().includes(q));
     }
+    if (f.cert.size) items = items.filter((i) => f.cert.has(i.trilha));
     if (f.tipo.size) items = items.filter((i) => f.tipo.has(i.kind));
     if (f.status.size) items = items.filter((i) => f.status.has(i.st.status));
 
     const cnt = (pred) => simItems.concat(temaItems).filter(pred).length;
+    const certsPresent = TRILHA_LIST.filter((tr) => simItems.concat(temaItems).some((i) => i.trilha === tr.id));
 
     appEl.innerHTML = `
     <div class="page container container-wide">
@@ -544,8 +590,6 @@
         </div>
       </div>
 
-      ${errorsBannerHtml()}
-
       <div class="toolbar">
         <div class="search"><span class="mag">🔎</span>
           <input id="cat-search" type="text" placeholder="Buscar por tema ou nome do simulado" value="${escapeAttr(f.q)}"></div>
@@ -554,6 +598,10 @@
       <div class="catalog">
         <aside class="filters card card-pad">
           <div class="f-head"><h3>Filtros</h3><button class="btn btn-ghost" style="padding:4px 8px" data-action="clear-filters">Limpar</button></div>
+          ${certsPresent.length > 1 ? `<div class="f-group">
+            <h4>Certificação</h4>
+            ${certsPresent.map((tr) => filterItem("cert", tr.id, tr.icon + " " + tr.name, cnt((i) => i.trilha === tr.id))).join("")}
+          </div>` : ""}
           <div class="f-group">
             <h4>Tipo</h4>
             ${filterItem("tipo", "sim", "Simulados completos", cnt((i) => i.kind === "sim"))}
@@ -680,32 +728,36 @@
   function renderDetail() {
     const key = state.params.key;
     const isSim = key.startsWith("sim-");
-    const isErrors = key === "errors";
+    const isErrors = key.startsWith("errors");
     const sim = isSim ? simByKey[key] : null;
     const tema = (!isSim && !isErrors) ? temaById[key.replace("tema-", "")] : null;
-    const qs = isSim ? QUESTIONS.filter((q) => q.simulado === sim.n)
-             : isErrors ? wrongQuestions()
+    const errTrilha = isErrors ? (key.indexOf("-") >= 0 ? key.slice(key.indexOf("-") + 1) : "admin") : null;
+    const trilhaId = isSim ? sim.trilha : isErrors ? errTrilha : (tema ? tema.trilha : "admin");
+    const T = TRILHAS[trilhaId] || TRILHAS.admin;
+    const pass = T.pass;
+    const qs = isSim ? QUESTIONS.filter((q) => trilhaOf(q) === sim.trilha && q.simulado === sim.n)
+             : isErrors ? wrongQuestions(errTrilha)
              : ALL_QUESTIONS.filter((q) => temaOf(q) === tema.id);
     // sem erros registrados → estado amigável
     if (isErrors && qs.length === 0) {
       appEl.innerHTML = `
       <div class="page container container-wide">
-        <div class="breadcrumb">Simulados / <b>Meus erros</b></div>
-        <div class="page-head"><div><h1>🎯 Simulado dos meus erros</h1>
-          <p>Aqui reunimos as questões que você errou nas tentativas.</p></div>
-          <button class="btn btn-outline" data-nav="catalog">← Voltar ao catálogo</button></div>
+        <div class="breadcrumb">${T.name} / <b>Meus erros</b></div>
+        <div class="page-head"><div><h1>🎯 ${T.name} — Meus erros</h1>
+          <p>Aqui reunimos as questões que você errou nas tentativas de ${T.name}.</p></div>
+          <button class="btn btn-outline" data-nav="trilhas">← Voltar às trilhas</button></div>
         <div class="card card-pad"><div class="empty"><span class="big">🏆</span>
-          Nenhuma pendência por aqui! Ou você ainda não concluiu simulados, ou já dominou tudo o que errou.<br>Faça (ou refaça) um simulado para alimentar sua revisão personalizada.
+          Nenhuma pendência por aqui! Ou você ainda não concluiu simulados de ${T.name}, ou já dominou tudo o que errou.<br>Faça (ou refaça) um simulado para alimentar sua revisão personalizada.
           <div class="mt8"><button class="btn btn-primary" data-nav="catalog" style="margin-top:14px">Ver simulados</button></div>
         </div></div>
       </div>`;
       return;
     }
     const total = qs.length;
-    const goal = Math.ceil(total * PASS_MARK / 100);
-    const title = isSim ? sim.title.replace("Administrator • ", "Salesforce Administrator • ")
-                : isErrors ? "Simulado dos meus erros" : tema.label;
-    const cert = isSim ? sim.cert : isErrors ? "Revisão personalizada" : "Prática por tema";
+    const goal = Math.ceil(total * pass / 100);
+    const title = isSim ? T.certFull + " • Simulado " + String(sim.n).padStart(2, "0")
+                : isErrors ? T.name + " — Meus erros" : tema.label;
+    const cert = isSim ? sim.cert : isErrors ? "Revisão personalizada · " + T.name : T.name + " · prática por tema";
     const level = isSim ? sim.level : isErrors ? "Seus erros" : "Foco";
     const time = isSim ? 90 : Math.round(total * 1.4);
     const st = simStatus(key);
@@ -714,7 +766,7 @@
     // distribuição por tema
     const dist = {};
     qs.forEach((q) => { const t = temaOf(q); dist[t] = (dist[t] || 0) + 1; });
-    const temaRows = TEMAS.filter((t) => dist[t.id]).map((t) => `
+    const temaRows = temasOf(trilhaId).filter((t) => dist[t.id]).map((t) => `
       <div class="tema-item">
         <div class="tema-ic">${t.icon}</div>
         <div class="t-body"><b>${t.label}</b><span>${t.desc}</span></div>
@@ -728,11 +780,11 @@
 
     appEl.innerHTML = `
     <div class="page container container-wide">
-      <div class="breadcrumb">Simulados / ${isSim ? "Administrator" : isErrors ? "Revisão" : "Temas"} / <b>${isSim ? sim.title.replace("Administrator • ", "") : isErrors ? "Meus erros" : tema.short}</b></div>
+      <div class="breadcrumb">${T.name} / ${isSim ? "Simulados" : isErrors ? "Revisão" : "Temas"} / <b>${isSim ? "Simulado " + String(sim.n).padStart(2, "0") : isErrors ? "Meus erros" : tema.short}</b></div>
       <div class="page-head">
         <div>
           <h1>${isErrors ? "🎯 " : ""}${title}</h1>
-          <p>${isSim ? "Construa confiança para a certificação com cenários próximos do dia a dia de um administrador."
+          <p>${isSim ? "Construa confiança para a certificação " + T.name + " com cenários próximos da prova."
                 : isErrors ? "As questões que você ainda erra — sem repetição, priorizando as que você mais erra, para fixar de vez."
                 : tema.desc}</p>
         </div>
@@ -741,13 +793,13 @@
 
       <div class="info-banner">
         <div class="ib-brand">
-          <div class="ib-ic">${isSim ? "🛡️" : isErrors ? "🎯" : tema.icon}</div>
-          <div><div class="ib-eyebrow">${isSim ? "Trilha Administrator" : isErrors ? "Revisão personalizada" : "Tema"}</div>
-            <div class="ib-title">${cert}</div><div class="ib-sub">${level} • atualizado em out. 2026</div></div>
+          <div class="ib-ic">${isSim ? T.icon : isErrors ? "🎯" : tema.icon}</div>
+          <div><div class="ib-eyebrow">${isSim ? "Trilha " + T.name : isErrors ? "Revisão personalizada" : "Tema"}</div>
+            <div class="ib-title">${cert}</div><div class="ib-sub">${level} • atualizado em nov. 2026</div></div>
         </div>
         <div class="ib-stat"><div class="ib-ic2">📄</div><b>${total} questões</b><span>Múltipla escolha</span></div>
         <div class="ib-stat"><div class="ib-ic2">⏱️</div><b>${time} min</b><span>Tempo sugerido</span></div>
-        <div class="ib-stat"><div class="ib-ic2">🎯</div><b>${PASS_MARK}% de acertos</b><span>Meta de aprovação</span></div>
+        <div class="ib-stat"><div class="ib-ic2">🎯</div><b>${pass}% de acertos</b><span>Meta de aprovação</span></div>
       </div>
 
       ${attemptsCardHtml(key)}
@@ -792,7 +844,7 @@
 
             <div class="goal-row">
               <div class="g-ic">🎯</div>
-              <div><b>Sua meta: ${goal} acertos de ${total}</b><br><span>Equivale a ${PASS_MARK}% de aproveitamento.</span></div>
+              <div><b>Sua meta: ${goal} acertos de ${total}</b><br><span>Equivale a ${pass}% de aproveitamento.</span></div>
             </div>
           </div>
 
@@ -804,7 +856,7 @@
               <li>Suas respostas são salvas automaticamente.</li>
               <li>Ao final, você vê o resultado e a revisão comentada.</li>
             </ul>
-            <div class="disclaimer">ℹ️ Material de estudo pessoal. A meta de ${PASS_MARK}% segue o critério oficial da certificação Administrator.</div>
+            <div class="disclaimer">ℹ️ Material de estudo pessoal. A meta de ${pass}% segue o critério oficial da certificação ${T.name}.</div>
           </div>
         </div>
       </div>
@@ -816,10 +868,14 @@
   // =================================================================
   function buildQuestions(key) {
     if (key.startsWith("sim-")) {
-      const n = +key.split("-")[1];
-      return QUESTIONS.filter((q) => q.simulado === n).sort((a, b) => a.number - b.number);
+      const s = simByKey[key];
+      if (!s) return [];
+      return QUESTIONS.filter((q) => trilhaOf(q) === s.trilha && q.simulado === s.n).sort((a, b) => a.number - b.number);
     }
-    if (key === "errors") return wrongQuestions().slice(); // já vem curado e ordenado
+    if (key.startsWith("errors")) {
+      const tr = key.indexOf("-") >= 0 ? key.slice(key.indexOf("-") + 1) : "admin";
+      return wrongQuestions(tr).slice(); // já vem curado e ordenado
+    }
     const temaId = key.replace("tema-", "");
     return shuffle(ALL_QUESTIONS.filter((q) => temaOf(q) === temaId).slice());
   }
@@ -827,7 +883,7 @@
   // Revisão personalizada: questões que o usuário AINDA erra (última tentativa
   // que a continha deu errado), sem repetição, priorizando as mais erradas e
   // intercalando por tema para um treino equilibrado.
-  function wrongQuestions() {
+  function wrongQuestions(trilhaId) {
     // processa o histórico do mais antigo para o mais recente
     const hist = store.history.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
     const stat = {}; // id -> { wrong, lastWrong }
@@ -835,6 +891,7 @@
       (a.order || []).forEach((id) => {
         const q = Q_BY_ID[id];
         if (!q) return;
+        if (trilhaId && trilhaOf(q) !== trilhaId) return;
         const ok = isCorrectStored(q, (a.answers || {})[id]);
         const s = stat[id] || (stat[id] = { wrong: 0, lastWrong: false });
         if (!ok) s.wrong++;
@@ -868,14 +925,16 @@
     else qs = buildQuestions(key);
 
     const isSim = key.startsWith("sim-");
-    const isErrors = key === "errors";
+    const isErrors = key.startsWith("errors");
     const sim = isSim ? simByKey[key] : null;
     const tema = (!isSim && !isErrors) ? temaById[key.replace("tema-", "")] : null;
+    const errTrilha = isErrors ? (key.indexOf("-") >= 0 ? key.slice(key.indexOf("-") + 1) : "admin") : null;
+    const trilha = isSim ? sim.trilha : isErrors ? errTrilha : (tema ? tema.trilha : "admin");
 
     session = {
-      key, mode: saved ? saved.mode : mode,
-      isSim, title: isSim ? sim.title : isErrors ? "Simulado dos meus erros" : tema.label,
-      cert: isSim ? sim.cert : isErrors ? "Revisão personalizada" : "Prática por tema",
+      key, trilha, mode: saved ? saved.mode : mode,
+      isSim, title: isSim ? sim.title : isErrors ? (TRILHAS[trilha].name + " • Meus erros") : tema.label,
+      cert: isSim ? sim.cert : isErrors ? "Revisão personalizada" : (TRILHAS[trilha].name + " · prática por tema"),
       questions: qs, order: qs.map(qid),
       answers: saved ? saved.answers || {} : {},
       flagged: saved ? saved.flagged || {} : {},
@@ -1149,9 +1208,10 @@
     const pct = Math.round((correct / total) * 100);
     const duration = currentElapsed();
 
+    const trilha = session.trilha || "admin";
     const attempt = {
-      key: session.key, label: session.title, cert: session.cert, mode: session.mode,
-      correct, wrong: total - correct, total, pct, passed: pct >= PASS_MARK,
+      key: session.key, trilha, label: session.title, cert: session.cert, mode: session.mode,
+      correct, wrong: total - correct, total, pct, passed: pct >= passOf(trilha),
       date: new Date().toISOString(), durationSec: duration,
       order: session.order, answers: session.answers, flagged: session.flagged, byTema,
     };
@@ -1168,17 +1228,20 @@
   function renderResult() {
     const a = currentAttempt || store.history[0];
     if (!a) { go("dashboard"); return; }
+    const aTrilha = a.trilha || "admin";
+    const pass = passOf(aTrilha);
+    const temas = temasOf(aTrilha);
     const passed = a.passed;
     const ringColor = passed ? "#1a7f44" : "#1763d6";
     const deg = Math.round(a.pct * 3.6);
-    const delta = a.pct - PASS_MARK;
+    const delta = a.pct - pass;
     const s = stats();
-    const simN = a.key.startsWith("sim-") ? +a.key.split("-")[1] : null;
+    const simN = a.key.startsWith("sim-") ? a.key.replace(/^sim-(?:[a-z]+-)?/, "") : null;
 
-    const temaRows = TEMAS.filter((t) => a.byTema[t.id]).map((t) => {
+    const temaRows = temas.filter((t) => a.byTema[t.id]).map((t) => {
       const b = a.byTema[t.id];
       const p = Math.round((b.c / b.t) * 100);
-      const color = p >= PASS_MARK ? "#1763d6" : "#c8821e";
+      const color = p >= pass ? "#1763d6" : "#c8821e";
       return `<tr>
         <td><b style="color:var(--brand-ink)">${t.icon} ${t.label}</b></td>
         <td>${b.c}/${b.t}</td>
@@ -1187,7 +1250,7 @@
       </tr>`;
     }).join("");
 
-    const worst = TEMAS.filter((t) => a.byTema[t.id])
+    const worst = temas.filter((t) => a.byTema[t.id])
       .map((t) => ({ t, p: a.byTema[t.id].c / a.byTema[t.id].t }))
       .sort((x, y) => x.p - y.p).slice(0, 2).map((x) => x.t.short);
 
@@ -1195,7 +1258,7 @@
 
     appEl.innerHTML = `
     <div class="page container container-wide">
-      <div class="breadcrumb">Simulados / ${a.key.startsWith("sim-") ? "Administrator" : "Temas"} / <b>Resultado</b></div>
+      <div class="breadcrumb">${(TRILHAS[aTrilha] || TRILHAS.admin).name} / <b>Resultado</b></div>
       <div class="page-head">
         <div>
           <h1>${passed ? "Você deu um grande passo, " + USER.name.split(" ")[0] + "! 🎉" : "Continue firme, " + USER.name.split(" ")[0] + "!"}</h1>
@@ -1211,8 +1274,8 @@
         <div>
           ${passed ? '<span class="badge badge-green">✓ Aprovado — meta alcançada</span>' : '<span class="badge badge-blue">Quase lá</span>'}
           <h2>${passed ? "Sua preparação está no caminho certo." : "Você está evoluindo a cada tentativa."}</h2>
-          <div class="rtext">Você acertou <b>${a.correct} de ${a.total}</b> questões${passed ? " e superou a meta de " + PASS_MARK + "%." : "."} ${a.wrong ? "Agora, transforme as " + a.wrong + " questões incorretas em novas oportunidades de aprender." : ""}</div>
-          <div class="rdelta" style="color:${passed ? "#1a7f44" : "#c8821e"}">${delta >= 0 ? delta + " pontos percentuais acima da meta" : Math.abs(delta) + " pontos para a aprovação (" + PASS_MARK + "%)"}</div>
+          <div class="rtext">Você acertou <b>${a.correct} de ${a.total}</b> questões${passed ? " e superou a meta de " + pass + "%." : "."} ${a.wrong ? "Agora, transforme as " + a.wrong + " questões incorretas em novas oportunidades de aprender." : ""}</div>
+          <div class="rdelta" style="color:${passed ? "#1a7f44" : "#c8821e"}">${delta >= 0 ? delta + " pontos percentuais acima da meta" : Math.abs(delta) + " pontos para a aprovação (" + pass + "%)"}</div>
         </div>
         <div class="result-actions-col">
           <button class="btn btn-primary btn-lg" data-action="review">📖 Revisar respostas</button>
@@ -1235,7 +1298,7 @@
 
       <div class="result-2col">
         <div class="card card-pad">
-          <div class="section-head"><h3>Seu desempenho por tema</h3><span class="badge badge-gray">Meta: ${PASS_MARK}%</span></div>
+          <div class="section-head"><h3>Seu desempenho por tema</h3><span class="badge badge-gray">Meta: ${pass}%</span></div>
           <p style="font-size:14px;color:var(--muted);margin-bottom:10px">Uma visão clara do que você já domina e do que pode reforçar.</p>
           <table class="tema-table">
             <thead><tr><th>Tema</th><th>Acertos</th><th>Aproveitamento</th><th></th></tr></thead>
@@ -1248,7 +1311,7 @@
           <div class="card conquista-card mb24">
             <div class="page-eyebrow" style="color:var(--brand)">${passed ? "🏆 Nova conquista" : "🎯 Próxima meta"}</div>
             <div class="conquista-ic">${passed ? "🏅" : "🎯"}</div>
-            <h3 style="font-size:21px;font-weight:800">${passed ? "Meta atingida!" : "Rumo aos 65%"}</h3>
+            <h3 style="font-size:21px;font-weight:800">${passed ? "Meta atingida!" : "Rumo aos " + pass + "%"}</h3>
             <p style="font-size:14px;color:var(--body);margin-top:6px">${passed
               ? "Você concluiu este" + (simN ? " simulado" : "a prática") + " com aproveitamento de aprovação. A próxima conquista está logo ali!"
               : "Faltam só " + Math.abs(delta) + " pontos. Revise seus erros e tente novamente."}</p>
@@ -1326,7 +1389,7 @@
 
     appEl.innerHTML = `
     <div class="page container container-wide">
-      <div class="breadcrumb">Simulados / ${a.key.startsWith("sim-") ? "Administrator" : "Temas"} / Resultado / <b>Revisão</b></div>
+      <div class="breadcrumb">${(TRILHAS[a.trilha || "admin"] || TRILHAS.admin).name} / Resultado / <b>Revisão</b></div>
       <div class="page-head">
         <div>
           <h1>Entenda cada resposta. Evolua a cada questão.</h1>
@@ -1397,47 +1460,66 @@
   //  TRILHAS
   // =================================================================
   function renderTrilhas() {
-    const s = stats();
-    const steps = SIMS.map((sim) => {
-      const st = simStatus(sim.key);
-      const done = st.status === "done";
-      const prog = st.status === "progress";
-      return { sim, st, done, prog };
-    });
+    const blocks = TRILHA_LIST.map((tr) => {
+      const trSims = SIMS.filter((s) => s.trilha === tr.id);
+      if (!trSims.length) return "";
+      const doneCount = trSims.filter((s) => simStatus(s.key).status === "done").length;
+      const pct = Math.round(doneCount / trSims.length * 100);
+      const steps = trSims.map((sim, i) => {
+        const st = simStatus(sim.key);
+        const done = st.status === "done", prog = st.status === "progress";
+        return `<div class="card card-pad" style="display:flex;gap:18px;align-items:center">
+            <div class="resume-ic" style="background:${done ? "var(--ok-bg)" : "var(--tint)"}">${done ? "✅" : prog ? "⏳" : i + 1}</div>
+            <div style="flex:1">
+              <div class="resume-eyebrow">Simulado ${String(sim.n).padStart(2, "0")} • ${sim.level}</div>
+              <div class="resume-title">Simulado ${String(sim.n).padStart(2, "0")}</div>
+              <div class="resume-sub">${sim.total} questões • ${done ? "melhor resultado " + st.best + "%" : prog ? st.answered + "/" + st.total + " respondidas" : "não iniciado"}</div>
+            </div>
+            <button class="btn ${prog ? "btn-primary" : "btn-outline"}" data-action="open-detail" data-key="${sim.key}">${done ? "Refazer" : prog ? "Retomar" : "Começar"} →</button>
+          </div>`;
+      }).join("");
+      const temaCards = tr.temas.map((t) => {
+        const qn = ALL_QUESTIONS.filter((q) => temaOf(q) === t.id).length;
+        if (!qn) return "";
+        return `<div class="card card-pad" style="display:flex;gap:16px;align-items:center;cursor:pointer" data-action="open-detail" data-key="tema-${t.id}">
+            <div class="tema-ic">${t.icon}</div>
+            <div style="flex:1"><b style="color:var(--brand-ink)">${t.label}</b><br><span style="font-size:13px;color:var(--muted)">${qn} questões</span></div>
+            <span style="color:var(--brand);font-weight:700">→</span></div>`;
+      }).join("");
+      return `
+        <div class="trilha-block card card-pad mb24">
+          <div class="trilha-head">
+            <div class="th-ic">${tr.icon}</div>
+            <div style="flex:1"><div class="resume-eyebrow">${tr.certFull} · meta ${tr.pass}%</div>
+              <h2 style="font-size:22px">${tr.name}</h2></div>
+            <span class="badge badge-blue">${doneCount}/${trSims.length} simulados</span>
+          </div>
+          <div class="pbar mb16" style="margin-top:12px"><div class="pbar-fill" style="width:${pct}%"></div></div>
+          ${errorsBannerHtml(tr.id)}
+          <div class="grid" style="grid-template-columns:1fr;gap:12px">${steps}</div>
+          <div class="section-head" style="margin:20px 0 12px"><h3 style="font-size:17px">🎯 Reforço por tema</h3></div>
+          <div class="cards-2">${temaCards}</div>
+        </div>`;
+    }).join("");
+
+    const comingSoon = [
+      { name: "Data Cloud", icon: "🌩️" },
+      { name: "Marketing Cloud", icon: "📣" },
+    ].map((c) => `<div class="card card-pad soon-card">
+        <div class="th-ic">${c.icon}</div>
+        <div style="flex:1"><div class="resume-eyebrow">Em breve</div>
+          <h3 style="font-size:18px">${c.name}</h3>
+          <span style="font-size:13px;color:var(--muted)">Simulados desta certificação serão adicionados em breve.</span></div>
+      </div>`).join("");
+
     appEl.innerHTML = `
     <div class="page container container-wide">
       <div class="breadcrumb">Minhas trilhas</div>
-      <div class="page-head">
-        <div><h1>🧭 Trilha Administrator</h1>
-        <p>Siga os 4 simulados em ordem e reforce os temas fracos entre eles. ${s.simsDone}/${SIMS.length} concluídos.</p></div>
-      </div>
-      <div class="card card-pad mb24">
-        <div class="pbar-row"><span style="font-weight:700">Progresso da trilha</span><span style="color:var(--brand);font-weight:800">${Math.round(s.simsDone / SIMS.length * 100)}%</span></div>
-        <div class="pbar"><div class="pbar-fill" style="width:${s.simsDone / SIMS.length * 100}%"></div></div>
-      </div>
-      <div class="grid" style="grid-template-columns:1fr">
-        ${steps.map((x, i) => `
-          <div class="card card-pad" style="display:flex;gap:18px;align-items:center">
-            <div class="resume-ic" style="background:${x.done ? "var(--ok-bg)" : "var(--tint)"}">${x.done ? "✅" : x.prog ? "⏳" : i + 1}</div>
-            <div style="flex:1">
-              <div class="resume-eyebrow">Etapa ${i + 1} • ${x.sim.level}</div>
-              <div class="resume-title">${x.sim.title}</div>
-              <div class="resume-sub">${x.sim.total} questões • ${x.done ? "melhor resultado " + x.st.best + "%" : x.prog ? x.st.answered + "/" + x.st.total + " respondidas" : "não iniciado"}</div>
-            </div>
-            <button class="btn ${x.prog ? "btn-primary" : "btn-outline"}" data-action="open-detail" data-key="${x.sim.key}">${x.done ? "Refazer" : x.prog ? "Retomar" : "Começar"} →</button>
-          </div>`).join("")}
-      </div>
-      <div class="section-head" style="margin:34px 0 16px"><h3>🎯 Reforço por tema</h3></div>
-      <div class="cards-2">
-        ${TEMAS.map((t) => {
-          const qs = ALL_QUESTIONS.filter((q) => temaOf(q) === t.id).length;
-          return `<div class="card card-pad" style="display:flex;gap:16px;align-items:center;cursor:pointer" data-action="open-detail" data-key="tema-${t.id}">
-            <div class="tema-ic">${t.icon}</div>
-            <div style="flex:1"><b style="color:var(--brand-ink)">${t.label}</b><br><span style="font-size:13px;color:var(--muted)">${qs} questões</span></div>
-            <span style="color:var(--brand);font-weight:700">→</span>
-          </div>`;
-        }).join("")}
-      </div>
+      <div class="page-head"><div><h1>🧭 Minhas trilhas</h1>
+        <p>Seu progresso por certificação. Escolha uma trilha e avance rumo à aprovação.</p></div></div>
+      ${blocks}
+      <div class="section-head" style="margin:10px 0 14px"><h3 style="font-size:18px">Próximas trilhas</h3></div>
+      <div class="cards-2">${comingSoon}</div>
     </div>`;
   }
 
@@ -1535,7 +1617,7 @@
       case "rev-prev": { const l = reviewList(currentAttempt); const p = l.findIndex((x) => x.i === reviewState.idx); if (p > 0) reviewState.idx = l[p - 1].i; renderReview(); } break;
       case "rev-next": { const l = reviewList(currentAttempt); const p = l.findIndex((x) => x.i === reviewState.idx); if (p < l.length - 1) reviewState.idx = l[p + 1].i; renderReview(); } break;
       case "practice-tema": go("detail", { key: "tema-" + el.getAttribute("data-tema") }); break;
-      case "clear-filters": catFilter = { status: new Set(), tipo: new Set(), q: "" }; renderCatalog(); break;
+      case "clear-filters": catFilter = { cert: new Set(), status: new Set(), tipo: new Set(), q: "" }; renderCatalog(); break;
     }
   }
 
