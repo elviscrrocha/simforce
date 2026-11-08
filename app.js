@@ -115,7 +115,7 @@
       ],
     },
     appbuilder: {
-      id: "appbuilder", name: "Platform App Builder", certFull: "Salesforce Certified Platform App Builder", icon: "🧱", pass: 63,
+      id: "appbuilder", name: "Platform App Builder", certFull: "Salesforce Certified Platform App Builder", icon: "🧱", pass: 73,
       temas: [
         { id: "ab-fundamentals", label: "Salesforce Fundamentals",               short: "Fundamentals",   desc: "Plataforma, AppExchange, declarativo vs. programático.", icon: "🧭" },
         { id: "ab-datamodel",    label: "Data Modeling & Management",            short: "Data Modeling",  desc: "Objetos, campos, relacionamentos, fórmulas e dados.",    icon: "🗄️" },
@@ -125,7 +125,7 @@
       ],
     },
     datacloud: {
-      id: "datacloud", name: "Data Cloud", certFull: "Salesforce Certified Data Cloud Consultant", icon: "🌩️", pass: 62,
+      id: "datacloud", name: "Data Cloud", certFull: "Salesforce Certified Data Cloud Consultant", icon: "🌩️", pass: 70,
       temas: [
         { id: "dc-overview",   label: "Solution Overview",          short: "Overview",      desc: "Visão geral, casos de uso, arquitetura e edições do Data Cloud.", icon: "🧭" },
         { id: "dc-ingestion",  label: "Data Ingestion & Modeling",  short: "Ingestion",     desc: "Data Streams, DLO/DMO, mapeamento, transforms e data spaces.",    icon: "🗄️" },
