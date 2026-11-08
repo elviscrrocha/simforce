@@ -1,19 +1,20 @@
 /* Service worker — cache dos arquivos para uso offline (PWA).
    Ao mudar os arquivos do app, suba o número de CACHE para forçar atualização. */
-const CACHE = "simforce-v25";
+const CACHE = "simforce-v26";
 const CORE = [
   "./",
   "./index.html",
   "./styles.css",
-  "./app.js?v=25",
-  "./questions.js?v=25",
-  "./questions-extra.js?v=25",
-  "./questions-pt.js?v=25",
-  "./questions-fix.js?v=25",
-  "./questions-sim5.js?v=25",
-  "./questions-appbuilder.js?v=25",
-  "./questions-appbuilder-pt.js?v=25",
-  "./questions-datacloud.js?v=25",
+  "./app.js?v=26",
+  "./questions.js?v=26",
+  "./questions-extra.js?v=26",
+  "./questions-pt.js?v=26",
+  "./questions-fix.js?v=26",
+  "./questions-sim5.js?v=26",
+  "./questions-appbuilder.js?v=26",
+  "./questions-appbuilder-pt.js?v=26",
+  "./questions-datacloud.js?v=26",
+  "./questions-datacloud-pt.js?v=26",
   "./manifest.json",
   "./assets/hero-astro.png",
   "./icons/icon-192.png",
